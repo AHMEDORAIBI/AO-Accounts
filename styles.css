@@ -339,3 +339,111 @@ dialog{border:0;border-radius:18px;max-width:700px;width:calc(100% - 28px);paddi
     margin: 0;
   }
 }
+
+
+/* ===== V3.8 Payment Table Alignment ===== */
+.mini-table{
+  table-layout:fixed!important;
+  width:100%!important;
+}
+.mini-table th,
+.mini-table td{
+  vertical-align:middle!important;
+  line-height:1.35!important;
+  padding:8px 7px!important;
+  word-break:normal!important;
+  overflow-wrap:normal!important;
+  hyphens:none!important;
+}
+.mini-table th{
+  font-size:11px!important;
+  font-weight:700!important;
+}
+.mini-table td{
+  font-size:11.5px!important;
+}
+
+/* Date */
+.mini-table th:nth-child(1),
+.mini-table td:nth-child(1){
+  width:18%!important;
+  white-space:nowrap!important;
+}
+
+/* Method */
+.mini-table th:nth-child(2),
+.mini-table td:nth-child(2){
+  width:22%!important;
+  white-space:nowrap!important;
+}
+
+/* Note */
+.mini-table th:nth-child(3),
+.mini-table td:nth-child(3){
+  width:40%!important;
+  white-space:normal!important;
+}
+
+/* Amount */
+.mini-table th:nth-child(4),
+.mini-table td:nth-child(4){
+  width:20%!important;
+  white-space:nowrap!important;
+}
+
+/* Keep English words intact */
+.mini-table td:nth-child(2),
+.mini-table th:nth-child(2){
+  word-break:keep-all!important;
+}
+
+/* Center selected compact columns */
+.mini-table th:nth-child(1),
+.mini-table th:nth-child(2),
+.mini-table th:nth-child(4),
+.mini-table td:nth-child(1),
+.mini-table td:nth-child(2),
+.mini-table td:nth-child(4){
+  text-align:center!important;
+}
+
+/* Leave note readable according to language direction */
+.mini-table td:nth-child(3){
+  text-align:start!important;
+}
+
+@media print{
+  #printArea .mini-table{
+    table-layout:fixed!important;
+    width:100%!important;
+  }
+  #printArea .mini-table th,
+  #printArea .mini-table td{
+    vertical-align:middle!important;
+    line-height:1.3!important;
+    padding:7px 6px!important;
+    word-break:normal!important;
+    overflow-wrap:normal!important;
+    hyphens:none!important;
+  }
+  #printArea .mini-table th:nth-child(1),
+  #printArea .mini-table td:nth-child(1){
+    width:18%!important;
+    white-space:nowrap!important;
+  }
+  #printArea .mini-table th:nth-child(2),
+  #printArea .mini-table td:nth-child(2){
+    width:22%!important;
+    white-space:nowrap!important;
+  }
+  #printArea .mini-table th:nth-child(3),
+  #printArea .mini-table td:nth-child(3){
+    width:40%!important;
+    white-space:normal!important;
+  }
+  #printArea .mini-table th:nth-child(4),
+  #printArea .mini-table td:nth-child(4){
+    width:20%!important;
+    white-space:nowrap!important;
+  }
+}
