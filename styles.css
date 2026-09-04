@@ -70,3 +70,17 @@ dialog{border:0;border-radius:18px;max-width:700px;width:calc(100% - 28px);paddi
   .inv-brandbar{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .desc-title,.summary-row.balance,.mini-table th{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
+
+
+/* ===== V3.3 Payment Management ===== */
+.action.manage{color:#7a5b17;background:#fff8e7}
+.payments-manager-dialog{max-width:900px}
+.manager-shell{padding:22px}
+.manager-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:4px 0 16px}
+.manager-summary>div{border:1px solid var(--line);background:#f8fafc;border-radius:12px;padding:13px}
+.manager-summary small{display:block;color:var(--muted);margin-bottom:5px}
+.manager-summary strong{color:var(--navy);font-size:17px}
+.empty-payments{border:1px dashed #d0d5dd;border-radius:12px;padding:28px;text-align:center;color:#98a2b3;background:#fafbfc}
+@media(max-width:760px){
+  .manager-summary{grid-template-columns:1fr}
+}

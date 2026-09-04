@@ -138,6 +138,24 @@
   </form>
 </dialog>
 
+
+<dialog id="paymentsManagerDialog" class="payments-manager-dialog">
+  <div class="manager-shell">
+    <div class="dialog-head">
+      <div>
+        <span class="eyebrow" data-i18n="payments">الدفعات</span>
+        <h3 id="paymentsManagerTitle">إدارة السداد</h3>
+      </div>
+      <button type="button" class="icon" data-close="paymentsManagerDialog">×</button>
+    </div>
+    <div id="paymentsManagerBody"></div>
+    <div class="actions">
+      <button type="button" class="secondary" data-close="paymentsManagerDialog" data-i18n="close">إغلاق</button>
+      <button type="button" class="primary" id="addPaymentFromManager" data-i18n="recordPayment">تسجيل سداد</button>
+    </div>
+  </div>
+</dialog>
+
 <dialog id="previewDialog" class="preview-dialog">
   <div class="preview-toolbar">
     <button type="button" class="secondary" data-close="previewDialog" data-i18n="close">إغلاق</button>

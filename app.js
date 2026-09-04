@@ -1,21 +1,34 @@
 
 const KEY='ao_accounts_v3';
-const OLD_KEYS=['ao_accounts_v2','ao_accounts_v1'];
+const OLD_KEYS=['ao_accounts_v3_2','ao_accounts_v3_1','ao_accounts_v2','ao_accounts_v1'];
 const LANG_KEY='ao_accounts_lang';
 const $=id=>document.getElementById(id);
 
+function normalizeData(parsed){
+  if(!parsed || typeof parsed!=='object') return {invoices:[]};
+  if(Array.isArray(parsed)) return {invoices:parsed};
+  if(!Array.isArray(parsed.invoices)) parsed.invoices=[];
+  parsed.invoices.forEach(inv=>{
+    if(!Array.isArray(inv.payments)) inv.payments=[];
+    // No VAT in this version.
+    inv.vatRate=0;
+  });
+  return parsed;
+}
 function loadData(){
-  let d=localStorage.getItem(KEY);
-  if(d) return JSON.parse(d);
-  for(const k of OLD_KEYS){
-    const old=localStorage.getItem(k);
-    if(old){
-      try{
-        const parsed=JSON.parse(old);
+  const keys=[KEY,...OLD_KEYS];
+  for(const k of keys){
+    const raw=localStorage.getItem(k);
+    if(!raw) continue;
+    try{
+      const parsed=normalizeData(JSON.parse(raw));
+      // Prefer the first version that actually contains invoices.
+      if(parsed.invoices.length){
         localStorage.setItem(KEY,JSON.stringify(parsed));
         return parsed;
-      }catch(e){}
-    }
+      }
+      if(k===KEY) return parsed;
+    }catch(e){}
   }
   return {invoices:[]};
 }
@@ -32,7 +45,7 @@ searchPlaceholder:"بحث بالعميل أو رقم الفاتورة",invoiceNo
 remaining:"المتبقي",status:"الحالة",actions:"إجراءات",invoice:"فاتورة",customerName:"اسم العميل",description:"البيان / الوصف",
 amount:"المبلغ",cancel:"إلغاء",saveInvoice:"حفظ الفاتورة",payment:"سداد",recordPayment:"تسجيل سداد",
 paymentMethod:"طريقة الدفع",paymentNote:"ملاحظة السداد",pay:"سداد",preview:"معاينة",edit:"تعديل",delete:"حذف",
-editPayment:"تعديل السداد",deletePayment:"حذف السداد",savePayment:"حفظ تعديل السداد",deletePaymentConfirm:"هل تريد حذف هذه الدفعة؟",
+editPayment:"تعديل السداد",deletePayment:"حذف السداد",savePayment:"حفظ تعديل السداد",deletePaymentConfirm:"هل تريد حذف هذه الدفعة؟",managePayments:"إدارة السداد",payments:"الدفعات",noPaymentsManage:"لا توجد دفعات مسجلة لهذه الفاتورة.",
 unpaid:"غير مدفوعة",partial:"مدفوعة جزئيًا",paidFull:"مدفوعة بالكامل",noInvoices:"لا توجد فواتير حتى الآن",
 invalidPayment:"قيمة السداد غير صحيحة أو أكبر من الرصيد المتبقي.",deleteConfirm:"هل تريد حذف هذه الفاتورة؟ لا يمكن التراجع عن ذلك.",
 close:"إغلاق",printSavePdf:"طباعة / حفظ PDF",invoiceTitle:"فاتورة / INVOICE",customerPrint:"اسم العميل / Customer",
@@ -48,7 +61,7 @@ searchPlaceholder:"Search by customer or invoice number",invoiceNo:"Invoice No."
 remaining:"Remaining",status:"Status",actions:"Actions",invoice:"Invoice",customerName:"Customer Name",description:"Description",
 amount:"Amount",cancel:"Cancel",saveInvoice:"Save Invoice",payment:"Payment",recordPayment:"Record Payment",
 paymentMethod:"Payment Method",paymentNote:"Payment Note",pay:"Pay",preview:"Preview",edit:"Edit",delete:"Delete",
-editPayment:"Edit Payment",deletePayment:"Delete Payment",savePayment:"Save Payment Changes",deletePaymentConfirm:"Delete this payment?",
+editPayment:"Edit Payment",deletePayment:"Delete Payment",savePayment:"Save Payment Changes",deletePaymentConfirm:"Delete this payment?",managePayments:"Manage Payments",payments:"Payments",noPaymentsManage:"No payments recorded for this invoice.",
 unpaid:"Unpaid",partial:"Partially Paid",paidFull:"Paid in Full",noInvoices:"No invoices yet",
 invalidPayment:"Payment amount is invalid or exceeds the remaining balance.",deleteConfirm:"Delete this invoice? This cannot be undone.",
 close:"Close",printSavePdf:"Print / Save PDF",invoiceTitle:"INVOICE / فاتورة",customerPrint:"Customer / اسم العميل",
@@ -113,6 +126,7 @@ function render(){
       <td><span class="badge ${cl}">${st}</span></td>
       <td>
         <button class="action pay" onclick="openPayment('${i.id}')">${t('pay')}</button>
+        <button class="action manage" onclick="openPaymentsManager('${i.id}')">${t('managePayments')}</button>
         <button class="action print" onclick="openPreview('${i.id}')">${t('preview')}</button>
         <button class="action edit" onclick="editInvoice('${i.id}')">${t('edit')}</button>
         <button class="danger" onclick="deleteInvoice('${i.id}')">${t('delete')}</button>
@@ -189,6 +203,7 @@ window.openPayment=id=>{
   $('paymentDialog').showModal();
 }
 window.editPayment=(invoiceId,paymentId)=>{
+  if($('paymentsManagerDialog')?.open) $('paymentsManagerDialog').close();
   const inv=data.invoices.find(x=>x.id===invoiceId);if(!inv)return;
   const p=(inv.payments||[]).find(x=>x.id===paymentId);if(!p)return;
   $('paymentInvoiceId').value=invoiceId;$('paymentId').value=paymentId;
@@ -221,6 +236,52 @@ $('paymentForm').onsubmit=e=>{
   }
   save();$('paymentDialog').close();
   if(previewInvoiceId===inv.id) openPreview(inv.id);
+  if(managerInvoiceId===inv.id) setTimeout(()=>openPaymentsManager(inv.id),60);
+}
+
+
+let managerInvoiceId=null;
+window.openPaymentsManager=id=>{
+  const inv=data.invoices.find(x=>x.id===id);if(!inv)return;
+  managerInvoiceId=id;
+  $('paymentsManagerTitle').textContent=`${t('managePayments')} — ${inv.no}`;
+  const pays=inv.payments||[];
+  if(!pays.length){
+    $('paymentsManagerBody').innerHTML=`<div class="empty-payments">${t('noPaymentsManage')}</div>`;
+  }else{
+    $('paymentsManagerBody').innerHTML=`
+      <div class="manager-summary">
+        <div><small>${t('total')}</small><strong>${money(total(inv))}</strong></div>
+        <div><small>${t('paid')}</small><strong>${money(paid(inv))}</strong></div>
+        <div><small>${t('remaining')}</small><strong>${money(balance(inv))}</strong></div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>${t('date')}</th><th>${t('paymentMethod')}</th><th>${t('paymentNote')}</th><th>${t('amount')}</th><th>${t('actions')}</th></tr></thead>
+        <tbody>${pays.map(p=>`<tr>
+          <td>${p.date}</td>
+          <td>${esc(p.method)}</td>
+          <td dir="auto">${esc(p.note||'—')}</td>
+          <td>${money(p.amount)}</td>
+          <td>
+            <button class="action edit" onclick="editPayment('${inv.id}','${p.id}')">${t('edit')}</button>
+            <button class="danger" onclick="deletePaymentAndRefresh('${inv.id}','${p.id}')">${t('delete')}</button>
+          </td>
+        </tr>`).join('')}</tbody>
+      </table></div>`;
+  }
+  $('paymentsManagerDialog').showModal();
+}
+window.deletePaymentAndRefresh=(invoiceId,paymentId)=>{
+  if(!confirm(t('deletePaymentConfirm')))return;
+  const inv=data.invoices.find(x=>x.id===invoiceId);if(!inv)return;
+  inv.payments=(inv.payments||[]).filter(x=>x.id!==paymentId);
+  save();
+  openPaymentsManager(invoiceId);
+}
+$('addPaymentFromManager').onclick=()=>{
+  if(!managerInvoiceId)return;
+  $('paymentsManagerDialog').close();
+  openPayment(managerInvoiceId);
 }
 
 function invoiceHtml(inv, printable=false){
