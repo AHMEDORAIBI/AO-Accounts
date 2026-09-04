@@ -447,3 +447,191 @@ dialog{border:0;border-radius:18px;max-width:700px;width:calc(100% - 28px);paddi
     white-space:nowrap!important;
   }
 }
+
+
+/* ===== V3.9 Professional Invoice Layout ===== */
+
+/* Payments now use full available width */
+.payments-section{
+  margin-top:16px;
+  width:100%;
+}
+
+.payments-section .section-title{
+  margin-bottom:8px;
+  color:var(--navy);
+  font-size:14px;
+  font-weight:800;
+}
+
+/* Main payments table */
+.professional-payments{
+  width:100%!important;
+  table-layout:fixed!important;
+  border-collapse:collapse!important;
+  background:rgba(255,255,255,.96)!important;
+  border:1px solid #d9dee7!important;
+}
+
+.professional-payments th{
+  background:#f5f7fa!important;
+  color:var(--navy)!important;
+  font-size:10.5px!important;
+  font-weight:800!important;
+  line-height:1.2!important;
+  padding:8px 6px!important;
+  text-align:center!important;
+  vertical-align:middle!important;
+  border:1px solid #d9dee7!important;
+}
+
+.professional-payments td{
+  font-size:11.5px!important;
+  line-height:1.45!important;
+  padding:9px 7px!important;
+  vertical-align:middle!important;
+  border:1px solid #d9dee7!important;
+  background:rgba(255,255,255,.98)!important;
+}
+
+/* Column widths: date | method | note | amount */
+.professional-payments th:nth-child(1),
+.professional-payments td:nth-child(1){
+  width:18%!important;
+  white-space:nowrap!important;
+  text-align:center!important;
+}
+
+.professional-payments th:nth-child(2),
+.professional-payments td:nth-child(2){
+  width:22%!important;
+  white-space:nowrap!important;
+  text-align:center!important;
+  word-break:keep-all!important;
+}
+
+.professional-payments th:nth-child(3),
+.professional-payments td:nth-child(3){
+  width:40%!important;
+  white-space:normal!important;
+  text-align:start!important;
+}
+
+.professional-payments th:nth-child(4),
+.professional-payments td:nth-child(4){
+  width:20%!important;
+  white-space:nowrap!important;
+  text-align:center!important;
+}
+
+/* Summary sits below payments, separated and aligned neatly */
+.invoice-summary-wrap{
+  display:flex;
+  justify-content:flex-start;
+  margin-top:16px;
+}
+
+html[dir="ltr"] .invoice-summary-wrap{
+  justify-content:flex-end;
+}
+
+.professional-summary{
+  width:40%;
+  min-width:280px;
+  background:rgba(255,255,255,.97)!important;
+  box-shadow:0 4px 14px rgba(21,56,95,.05)!important;
+}
+
+.professional-summary .summary-caption{
+  font-size:13px!important;
+  padding:9px 12px!important;
+}
+
+.professional-summary .summary-row{
+  font-size:12.5px!important;
+  padding:8px 12px!important;
+}
+
+.professional-summary .summary-row.total{
+  font-size:13.5px!important;
+  font-weight:800!important;
+}
+
+.professional-summary .summary-row.balance{
+  font-size:15px!important;
+  font-weight:800!important;
+}
+
+/* Thank-you line placed after the summary */
+.letterhead-thankyou{
+  margin-top:14px!important;
+  text-align:center!important;
+}
+
+/* On-screen preview remains clean */
+@media screen and (max-width:760px){
+  .professional-summary{
+    width:100%;
+    min-width:0;
+  }
+}
+
+/* Print-specific professional layout */
+@media print{
+  #printArea .payments-section{
+    margin-top:14px!important;
+    width:100%!important;
+  }
+
+  #printArea .professional-payments{
+    width:100%!important;
+    table-layout:fixed!important;
+  }
+
+  #printArea .professional-payments th{
+    font-size:10px!important;
+    padding:7px 5px!important;
+  }
+
+  #printArea .professional-payments td{
+    font-size:11px!important;
+    padding:8px 6px!important;
+  }
+
+  #printArea .professional-payments th:nth-child(1),
+  #printArea .professional-payments td:nth-child(1){
+    width:18%!important;
+    white-space:nowrap!important;
+  }
+
+  #printArea .professional-payments th:nth-child(2),
+  #printArea .professional-payments td:nth-child(2){
+    width:22%!important;
+    white-space:nowrap!important;
+  }
+
+  #printArea .professional-payments th:nth-child(3),
+  #printArea .professional-payments td:nth-child(3){
+    width:40%!important;
+    white-space:normal!important;
+  }
+
+  #printArea .professional-payments th:nth-child(4),
+  #printArea .professional-payments td:nth-child(4){
+    width:20%!important;
+    white-space:nowrap!important;
+  }
+
+  #printArea .invoice-summary-wrap{
+    margin-top:14px!important;
+  }
+
+  #printArea .professional-summary{
+    width:40%!important;
+    min-width:0!important;
+  }
+
+  #printArea .letterhead-thankyou{
+    margin-top:12px!important;
+  }
+}
