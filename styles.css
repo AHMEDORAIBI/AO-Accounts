@@ -84,3 +84,85 @@ dialog{border:0;border-radius:18px;max-width:700px;width:calc(100% - 28px);paddi
 @media(max-width:760px){
   .manager-summary{grid-template-columns:1fr}
 }
+
+
+/* ===== V3.4 Official AO Letterhead Invoice ===== */
+.letterhead-page{
+  position:relative;
+  overflow:hidden;
+  padding:0!important;
+  background:#fff;
+}
+.letterhead-bg{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  z-index:0;
+  pointer-events:none;
+}
+.invoice-content{
+  position:relative;
+  z-index:1;
+  padding:54mm 16mm 34mm;
+  min-height:297mm;
+}
+.doc-heading{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:20px;
+  padding-bottom:10px;
+  border-bottom:1.5px solid #d7b22d;
+}
+.doc-title{
+  color:var(--navy);
+  font-size:24px;
+  font-weight:800;
+  line-height:1.2;
+}
+.doc-number{
+  color:#344054;
+  font-weight:700;
+  font-size:12px;
+  margin-top:5px;
+}
+.doc-date{
+  color:#475467;
+  font-weight:700;
+  font-size:12px;
+}
+.letterhead-customer{
+  margin-top:14px;
+  background:rgba(255,255,255,.90);
+  backdrop-filter:blur(1px);
+}
+.letterhead-desc{
+  margin-top:14px;
+  background:rgba(255,255,255,.92);
+}
+.letterhead-desc .desc-text{
+  min-height:64px;
+}
+.letterhead-grid{
+  margin-top:14px;
+  grid-template-columns:1fr 300px;
+}
+.letterhead-grid .payments-box,
+.letterhead-grid .summary-box{
+  background:rgba(255,255,255,.94);
+}
+.letterhead-thankyou{
+  margin-top:18px;
+  font-size:12px;
+}
+@media print{
+  .letterhead-bg{
+    display:block!important;
+    visibility:visible!important;
+  }
+  .invoice-content{
+    padding:54mm 16mm 34mm;
+  }
+}
