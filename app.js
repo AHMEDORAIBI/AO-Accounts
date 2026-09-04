@@ -30,13 +30,13 @@ dashboardTitle:"لوحة الفواتير والأرصدة",dashboardSubtitle:"�
 totalInvoices:"إجمالي الفواتير",totalPaid:"إجمالي المسدد",totalBalance:"إجمالي المتبقي",records:"السجلات",invoices:"الفواتير",
 searchPlaceholder:"بحث بالعميل أو رقم الفاتورة",invoiceNo:"رقم الفاتورة",date:"التاريخ",customer:"العميل",total:"الإجمالي",paid:"المسدد",
 remaining:"المتبقي",status:"الحالة",actions:"إجراءات",invoice:"فاتورة",customerName:"اسم العميل",description:"البيان / الوصف",
-amount:"المبلغ",vat:"الضريبة %",cancel:"إلغاء",saveInvoice:"حفظ الفاتورة",payment:"سداد",recordPayment:"تسجيل سداد",
+amount:"المبلغ",cancel:"إلغاء",saveInvoice:"حفظ الفاتورة",payment:"سداد",recordPayment:"تسجيل سداد",
 paymentMethod:"طريقة الدفع",paymentNote:"ملاحظة السداد",pay:"سداد",preview:"معاينة",edit:"تعديل",delete:"حذف",
 editPayment:"تعديل السداد",deletePayment:"حذف السداد",savePayment:"حفظ تعديل السداد",deletePaymentConfirm:"هل تريد حذف هذه الدفعة؟",
 unpaid:"غير مدفوعة",partial:"مدفوعة جزئيًا",paidFull:"مدفوعة بالكامل",noInvoices:"لا توجد فواتير حتى الآن",
 invalidPayment:"قيمة السداد غير صحيحة أو أكبر من الرصيد المتبقي.",deleteConfirm:"هل تريد حذف هذه الفاتورة؟ لا يمكن التراجع عن ذلك.",
 close:"إغلاق",printSavePdf:"طباعة / حفظ PDF",invoiceTitle:"فاتورة / INVOICE",customerPrint:"اسم العميل / Customer",
-statusPrint:"الحالة / Status",descriptionPrint:"البيان / Description",amountPrint:"المبلغ / Amount",taxPrint:"الضريبة / VAT",
+statusPrint:"الحالة / Status",descriptionPrint:"البيان / Description",amountPrint:"المبلغ / Amount",
 subtotalPrint:"المبلغ قبل الضريبة / Subtotal",totalPrint:"الإجمالي / Total",paidPrint:"المسدد / Paid",remainingPrint:"المتبقي / Balance",
 paymentsPrint:"الدفعات المسجلة / Payments",methodPrint:"الطريقة / Method",notePrint:"ملاحظة / Note",noPayments:"لا توجد دفعات مسجلة"
 },
@@ -46,13 +46,13 @@ dashboardTitle:"Invoices & Balances Dashboard",dashboardSubtitle:"Track invoices
 totalInvoices:"Total Invoices",totalPaid:"Total Paid",totalBalance:"Outstanding Balance",records:"Records",invoices:"Invoices",
 searchPlaceholder:"Search by customer or invoice number",invoiceNo:"Invoice No.",date:"Date",customer:"Customer",total:"Total",paid:"Paid",
 remaining:"Remaining",status:"Status",actions:"Actions",invoice:"Invoice",customerName:"Customer Name",description:"Description",
-amount:"Amount",vat:"VAT %",cancel:"Cancel",saveInvoice:"Save Invoice",payment:"Payment",recordPayment:"Record Payment",
+amount:"Amount",cancel:"Cancel",saveInvoice:"Save Invoice",payment:"Payment",recordPayment:"Record Payment",
 paymentMethod:"Payment Method",paymentNote:"Payment Note",pay:"Pay",preview:"Preview",edit:"Edit",delete:"Delete",
 editPayment:"Edit Payment",deletePayment:"Delete Payment",savePayment:"Save Payment Changes",deletePaymentConfirm:"Delete this payment?",
 unpaid:"Unpaid",partial:"Partially Paid",paidFull:"Paid in Full",noInvoices:"No invoices yet",
 invalidPayment:"Payment amount is invalid or exceeds the remaining balance.",deleteConfirm:"Delete this invoice? This cannot be undone.",
 close:"Close",printSavePdf:"Print / Save PDF",invoiceTitle:"INVOICE / فاتورة",customerPrint:"Customer / اسم العميل",
-statusPrint:"Status / الحالة",descriptionPrint:"Description / البيان",amountPrint:"Amount / المبلغ",taxPrint:"VAT / الضريبة",
+statusPrint:"Status / الحالة",descriptionPrint:"Description / البيان",amountPrint:"Amount / المبلغ",
 subtotalPrint:"Subtotal / المبلغ قبل الضريبة",totalPrint:"Total / الإجمالي",paidPrint:"Paid / المسدد",remainingPrint:"Balance / المتبقي",
 paymentsPrint:"Payments / الدفعات المسجلة",methodPrint:"Method / الطريقة",notePrint:"Note / ملاحظة",noPayments:"No recorded payments"
 }
@@ -68,7 +68,7 @@ function nextNo(){
   const n=(nums.length?Math.max(...nums):0)+1;
   return `AO-INV-${y}-${String(n).padStart(4,'0')}`;
 }
-function total(inv){return Number(inv.amount||0)*(1+Number(inv.vatRate||0)/100)}
+function total(inv){return Number(inv.amount||0)}
 function paid(inv){return (inv.payments||[]).reduce((s,p)=>s+Number(p.amount||0),0)}
 function balance(inv){return Math.max(0,total(inv)-paid(inv))}
 function status(inv){
@@ -132,16 +132,15 @@ $('newInvoiceBtn').onclick=()=>{
   $('invoiceId').value='';
   $('invoiceNo').value=nextNo();
   $('invoiceDate').value=today();
-  $('vatRate').value=0;
   $('invoiceDialogTitle').textContent=t('newInvoiceTitle');
   calcPreview();
   $('invoiceDialog').showModal();
 }
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$(b.dataset.close).close());
-['amount','vatRate'].forEach(id=>$(id).addEventListener('input',calcPreview));
+$('amount').addEventListener('input',calcPreview);
 function calcPreview(){
-  const a=Number($('amount').value||0),v=Number($('vatRate').value||0);
-  $('invoiceTotalPreview').textContent=money(a*(1+v/100));
+  const a=Number($('amount').value||0);
+  $('invoiceTotalPreview').textContent=money(a);
 }
 $('invoiceForm').onsubmit=e=>{
   e.preventDefault();
@@ -150,19 +149,18 @@ $('invoiceForm').onsubmit=e=>{
     const inv=data.invoices.find(x=>x.id===id);
     if(!inv)return;
     const newAmount=Number($('amount').value);
-    const newVat=Number($('vatRate').value||0);
-    const newTotal=newAmount*(1+newVat/100);
+    const newTotal=newAmount;
     if(newTotal+0.0005<paid(inv)){
       alert(currentLang==='ar'?'لا يمكن تخفيض إجمالي الفاتورة إلى أقل من المبلغ المسدد.':'Invoice total cannot be lower than the amount already paid.');
       return;
     }
     inv.date=$('invoiceDate').value; inv.customer=$('customerName').value.trim();
     inv.description=$('description').value.trim(); inv.amount=newAmount;
-    inv.vatRate=newVat;
+    inv.vatRate=0;
   }else{
     data.invoices.push({id:crypto.randomUUID(),no:$('invoiceNo').value,date:$('invoiceDate').value,
       customer:$('customerName').value.trim(),description:$('description').value.trim(),
-      amount:Number($('amount').value),vatRate:Number($('vatRate').value||0),payments:[]});
+      amount:Number($('amount').value),vatRate:0,payments:[]});
   }
   save();$('invoiceDialog').close();
 }
@@ -170,7 +168,7 @@ window.editInvoice=id=>{
   const inv=data.invoices.find(x=>x.id===id);if(!inv)return;
   $('invoiceId').value=inv.id;$('invoiceNo').value=inv.no;$('invoiceDate').value=inv.date;
   $('customerName').value=inv.customer;$('description').value=inv.description;
-  $('amount').value=Number(inv.amount).toFixed(3);$('vatRate').value=Number(inv.vatRate||0);
+  $('amount').value=Number(inv.amount).toFixed(3);
   $('invoiceDialogTitle').textContent=t('editInvoiceTitle');calcPreview();
   detectDirection($('customerName'));detectDirection($('description'));
   $('invoiceDialog').showModal();
@@ -226,7 +224,7 @@ $('paymentForm').onsubmit=e=>{
 }
 
 function invoiceHtml(inv, printable=false){
-  const subtotal=Number(inv.amount||0), vat=total(inv)-subtotal, [st,cl]=status(inv);
+  const subtotal=Number(inv.amount||0), [st,cl]=status(inv);
   const pays=(inv.payments||[]);
   const actionsHeader = printable ? '' : `<th style="width:16%">${t('actions')}</th>`;
   const payRows=pays.length?pays.map(p=>`<tr>
@@ -276,7 +274,6 @@ function invoiceHtml(inv, printable=false){
       <div class="summary-box modern">
         <div class="summary-caption">${currentLang==='ar'?'ملخص الفاتورة':'Invoice Summary'}</div>
         <div class="summary-row"><span>${t('subtotalPrint')}</span><span>${money(subtotal)}</span></div>
-        <div class="summary-row"><span>${t('taxPrint')} (${Number(inv.vatRate||0).toFixed(2)}%)</span><span>${money(vat)}</span></div>
         <div class="summary-row total"><span>${t('totalPrint')}</span><span>${money(total(inv))}</span></div>
         <div class="summary-row"><span>${t('paidPrint')}</span><span>${money(paid(inv))}</span></div>
         <div class="summary-row balance"><span>${t('remainingPrint')}</span><span>${money(balance(inv))}</span></div>
