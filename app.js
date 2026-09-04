@@ -32,6 +32,7 @@ searchPlaceholder:"بحث بالعميل أو رقم الفاتورة",invoiceNo
 remaining:"المتبقي",status:"الحالة",actions:"إجراءات",invoice:"فاتورة",customerName:"اسم العميل",description:"البيان / الوصف",
 amount:"المبلغ",vat:"الضريبة %",cancel:"إلغاء",saveInvoice:"حفظ الفاتورة",payment:"سداد",recordPayment:"تسجيل سداد",
 paymentMethod:"طريقة الدفع",paymentNote:"ملاحظة السداد",pay:"سداد",preview:"معاينة",edit:"تعديل",delete:"حذف",
+editPayment:"تعديل السداد",deletePayment:"حذف السداد",savePayment:"حفظ تعديل السداد",deletePaymentConfirm:"هل تريد حذف هذه الدفعة؟",
 unpaid:"غير مدفوعة",partial:"مدفوعة جزئيًا",paidFull:"مدفوعة بالكامل",noInvoices:"لا توجد فواتير حتى الآن",
 invalidPayment:"قيمة السداد غير صحيحة أو أكبر من الرصيد المتبقي.",deleteConfirm:"هل تريد حذف هذه الفاتورة؟ لا يمكن التراجع عن ذلك.",
 close:"إغلاق",printSavePdf:"طباعة / حفظ PDF",invoiceTitle:"فاتورة / INVOICE",customerPrint:"اسم العميل / Customer",
@@ -47,6 +48,7 @@ searchPlaceholder:"Search by customer or invoice number",invoiceNo:"Invoice No."
 remaining:"Remaining",status:"Status",actions:"Actions",invoice:"Invoice",customerName:"Customer Name",description:"Description",
 amount:"Amount",vat:"VAT %",cancel:"Cancel",saveInvoice:"Save Invoice",payment:"Payment",recordPayment:"Record Payment",
 paymentMethod:"Payment Method",paymentNote:"Payment Note",pay:"Pay",preview:"Preview",edit:"Edit",delete:"Delete",
+editPayment:"Edit Payment",deletePayment:"Delete Payment",savePayment:"Save Payment Changes",deletePaymentConfirm:"Delete this payment?",
 unpaid:"Unpaid",partial:"Partially Paid",paidFull:"Paid in Full",noInvoices:"No invoices yet",
 invalidPayment:"Payment amount is invalid or exceeds the remaining balance.",deleteConfirm:"Delete this invoice? This cannot be undone.",
 close:"Close",printSavePdf:"Print / Save PDF",invoiceTitle:"INVOICE / فاتورة",customerPrint:"Customer / اسم العميل",
@@ -147,9 +149,16 @@ $('invoiceForm').onsubmit=e=>{
   if(id){
     const inv=data.invoices.find(x=>x.id===id);
     if(!inv)return;
+    const newAmount=Number($('amount').value);
+    const newVat=Number($('vatRate').value||0);
+    const newTotal=newAmount*(1+newVat/100);
+    if(newTotal+0.0005<paid(inv)){
+      alert(currentLang==='ar'?'لا يمكن تخفيض إجمالي الفاتورة إلى أقل من المبلغ المسدد.':'Invoice total cannot be lower than the amount already paid.');
+      return;
+    }
     inv.date=$('invoiceDate').value; inv.customer=$('customerName').value.trim();
-    inv.description=$('description').value.trim(); inv.amount=Number($('amount').value);
-    inv.vatRate=Number($('vatRate').value||0);
+    inv.description=$('description').value.trim(); inv.amount=newAmount;
+    inv.vatRate=newVat;
   }else{
     data.invoices.push({id:crypto.randomUUID(),no:$('invoiceNo').value,date:$('invoiceDate').value,
       customer:$('customerName').value.trim(),description:$('description').value.trim(),
@@ -173,60 +182,99 @@ window.deleteInvoice=id=>{
 
 window.openPayment=id=>{
   const inv=data.invoices.find(x=>x.id===id);if(!inv)return;
-  $('paymentInvoiceId').value=id;$('paymentDate').value=today();
+  $('paymentInvoiceId').value=id;$('paymentId').value='';
+  $('paymentDate').value=today();
   $('paymentAmount').value=balance(inv).toFixed(3);$('paymentNote').value='';
+  $('paymentMethod').value='Bank Transfer';
+  $('paymentDialogTitle').textContent=t('recordPayment');
+  $('paymentSubmitBtn').textContent=t('recordPayment');
   $('paymentDialog').showModal();
+}
+window.editPayment=(invoiceId,paymentId)=>{
+  const inv=data.invoices.find(x=>x.id===invoiceId);if(!inv)return;
+  const p=(inv.payments||[]).find(x=>x.id===paymentId);if(!p)return;
+  $('paymentInvoiceId').value=invoiceId;$('paymentId').value=paymentId;
+  $('paymentDate').value=p.date;$('paymentAmount').value=Number(p.amount).toFixed(3);
+  $('paymentMethod').value=p.method;$('paymentNote').value=p.note||'';
+  $('paymentDialogTitle').textContent=t('editPayment');
+  $('paymentSubmitBtn').textContent=t('savePayment');
+  $('paymentDialog').showModal();
+}
+window.deletePayment=(invoiceId,paymentId)=>{
+  if(!confirm(t('deletePaymentConfirm')))return;
+  const inv=data.invoices.find(x=>x.id===invoiceId);if(!inv)return;
+  inv.payments=(inv.payments||[]).filter(x=>x.id!==paymentId);
+  save();
+  if(previewInvoiceId===invoiceId) openPreview(invoiceId);
 }
 $('paymentForm').onsubmit=e=>{
   e.preventDefault();
   const inv=data.invoices.find(x=>x.id===$('paymentInvoiceId').value);if(!inv)return;
   const amount=Number($('paymentAmount').value);
-  if(amount<=0||amount>balance(inv)+0.0005){alert(t('invalidPayment'));return}
+  const paymentId=$('paymentId').value;
+  const otherPaid=(inv.payments||[]).filter(p=>p.id!==paymentId).reduce((s,p)=>s+Number(p.amount||0),0);
+  if(amount<=0||otherPaid+amount>total(inv)+0.0005){alert(t('invalidPayment'));return}
   inv.payments=inv.payments||[];
-  inv.payments.push({id:crypto.randomUUID(),date:$('paymentDate').value,amount,method:$('paymentMethod').value,note:$('paymentNote').value.trim()});
+  if(paymentId){
+    const p=inv.payments.find(x=>x.id===paymentId);if(!p)return;
+    p.date=$('paymentDate').value;p.amount=amount;p.method=$('paymentMethod').value;p.note=$('paymentNote').value.trim();
+  }else{
+    inv.payments.push({id:crypto.randomUUID(),date:$('paymentDate').value,amount,method:$('paymentMethod').value,note:$('paymentNote').value.trim()});
+  }
   save();$('paymentDialog').close();
+  if(previewInvoiceId===inv.id) openPreview(inv.id);
 }
 
-function invoiceHtml(inv){
+function invoiceHtml(inv, printable=false){
   const subtotal=Number(inv.amount||0), vat=total(inv)-subtotal, [st,cl]=status(inv);
   const pays=(inv.payments||[]);
-  const payRows=pays.length?pays.map(p=>`<tr><td>${p.date}</td><td>${esc(p.method)}</td><td dir="auto">${esc(p.note||'—')}</td><td>${money(p.amount)}</td></tr>`).join(''):
-    `<tr><td colspan="4" style="text-align:center;color:#98a2b3">${t('noPayments')}</td></tr>`;
+  const actionsHeader = printable ? '' : `<th style="width:16%">${t('actions')}</th>`;
+  const payRows=pays.length?pays.map(p=>`<tr>
+      <td>${p.date}</td><td>${esc(p.method)}</td><td dir="auto">${esc(p.note||'—')}</td><td>${money(p.amount)}</td>
+      ${printable?'':`<td class="payment-actions"><button class="mini-action" onclick="editPayment('${inv.id}','${p.id}')">${t('edit')}</button><button class="mini-action danger-link" onclick="deletePayment('${inv.id}','${p.id}')">${t('delete')}</button></td>`}
+    </tr>`).join(''):
+    `<tr><td colspan="${printable?4:5}" style="text-align:center;color:#98a2b3">${t('noPayments')}</td></tr>`;
+
   return `<div class="invoice-page" dir="${currentLang==='ar'?'rtl':'ltr'}">
+    <div class="inv-brandbar"></div>
     <div class="inv-head">
-      <img src="./ao-logo.jpg" alt="AO">
+      <div class="inv-logo-wrap">
+        <img src="./ao-logo.jpg" alt="AO">
+      </div>
       <div class="inv-title">
-        <h1>${t('invoiceTitle')}</h1>
-        <div class="no">${inv.no}</div>
-        <div class="no">${inv.date}</div>
+        <div class="inv-label">${t('invoiceTitle')}</div>
+        <div class="inv-number">${inv.no}</div>
+        <div class="inv-date">${inv.date}</div>
       </div>
     </div>
 
-    <div class="inv-meta">
-      <div class="meta-card">
+    <div class="customer-strip">
+      <div>
         <small>${t('customerPrint')}</small>
         <strong dir="auto">${esc(inv.customer)}</strong>
       </div>
-      <div class="meta-card">
+      <div>
         <small>${t('statusPrint')}</small>
         <span class="inv-status ${cl}">${st}</span>
       </div>
     </div>
 
-    <table class="inv-table">
-      <thead><tr><th>${t('descriptionPrint')}</th><th style="width:27%">${t('amountPrint')}</th></tr></thead>
-      <tbody><tr><td class="desc" dir="auto">${esc(inv.description)}</td><td>${money(subtotal)}</td></tr></tbody>
-    </table>
+    <section class="desc-card">
+      <div class="desc-title">${t('descriptionPrint')}</div>
+      <div class="desc-text" dir="auto">${esc(inv.description)}</div>
+    </section>
 
-    <div class="inv-lower">
+    <div class="inv-main-grid">
       <div class="payments-box">
-        <h3>${t('paymentsPrint')}</h3>
+        <div class="section-title">${t('paymentsPrint')}</div>
         <table class="mini-table">
-          <thead><tr><th>${t('date')}</th><th>${t('methodPrint')}</th><th>${t('notePrint')}</th><th>${t('amountPrint')}</th></tr></thead>
+          <thead><tr><th>${t('date')}</th><th>${t('methodPrint')}</th><th>${t('notePrint')}</th><th>${t('amountPrint')}</th>${actionsHeader}</tr></thead>
           <tbody>${payRows}</tbody>
         </table>
       </div>
-      <div class="summary-box">
+
+      <div class="summary-box modern">
+        <div class="summary-caption">${currentLang==='ar'?'ملخص الفاتورة':'Invoice Summary'}</div>
         <div class="summary-row"><span>${t('subtotalPrint')}</span><span>${money(subtotal)}</span></div>
         <div class="summary-row"><span>${t('taxPrint')} (${Number(inv.vatRate||0).toFixed(2)}%)</span><span>${money(vat)}</span></div>
         <div class="summary-row total"><span>${t('totalPrint')}</span><span>${money(total(inv))}</span></div>
@@ -235,17 +283,20 @@ function invoiceHtml(inv){
       </div>
     </div>
 
-    <div class="inv-footer">AO • AHMED ALORAIBI • EXPERT ACCOUNTANT</div>
+    <div class="thankyou">${currentLang==='ar'?'شكرًا لتعاملكم معنا':'Thank you for your business'}</div>
+    <div class="inv-footer">
+      <strong>AO • AHMED ALORAIBI • EXPERT ACCOUNTANT</strong>
+    </div>
   </div>`;
 }
 window.openPreview=id=>{
   const inv=data.invoices.find(x=>x.id===id);if(!inv)return;
-  previewInvoiceId=id;$('invoicePreview').outerHTML = `<div id="invoicePreview">${invoiceHtml(inv)}</div>`;
+  previewInvoiceId=id;$('invoicePreview').outerHTML = `<div id="invoicePreview">${invoiceHtml(inv,false)}</div>`;
   $('previewDialog').showModal();
 }
 $('printFromPreview').onclick=()=>{
   const inv=data.invoices.find(x=>x.id===previewInvoiceId);if(!inv)return;
-  $('printArea').innerHTML=invoiceHtml(inv);
+  $('printArea').innerHTML=invoiceHtml(inv,true);
   setTimeout(()=>window.print(),80);
 }
 $('search').addEventListener('input',render);
