@@ -1,8 +1,152 @@
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AO Accounts</title><link rel="stylesheet" href="styles.css"></head><body>
-<header class="topbar"><div class="brand"><img src="./ao-logo.jpg" alt="AO Logo"><div><h1>AO Accounts</h1><p>Invoices • Payments • Balances</p></div></div><div class="top-actions"><div class="lang-switch"><button id="arBtn" class="lang-btn active">AR</button><button id="enBtn" class="lang-btn">EN</button></div><button id="newInvoiceBtn" class="primary" data-i18n="newInvoice">+ فاتورة جديدة</button></div></header>
-<main class="container"><section class="hero"><span class="eyebrow" data-i18n="overview">نظرة عامة</span><h2 data-i18n="dashboardTitle">لوحة الفواتير والأرصدة</h2><p data-i18n="dashboardSubtitle">متابعة الفواتير، المبالغ المسددة، والأرصدة المتبقية.</p></section>
-<section class="stats"><article class="card"><span data-i18n="totalInvoices">إجمالي الفواتير</span><strong id="statInvoices">0.000 د.ب</strong></article><article class="card"><span data-i18n="totalPaid">إجمالي المسدد</span><strong id="statPaid">0.000 د.ب</strong></article><article class="card"><span data-i18n="totalBalance">إجمالي المتبقي</span><strong id="statBalance">0.000 د.ب</strong></article></section>
-<section class="panel"><div class="panel-head"><div><span class="eyebrow" data-i18n="records">السجلات</span><h2 data-i18n="invoices">الفواتير</h2></div><input id="search" class="auto-dir" data-i18n-placeholder="searchPlaceholder" placeholder="بحث بالعميل أو رقم الفاتورة"></div><div class="table-wrap"><table><thead><tr><th data-i18n="invoiceNo">رقم الفاتورة</th><th data-i18n="date">التاريخ</th><th data-i18n="customer">العميل</th><th data-i18n="total">الإجمالي</th><th data-i18n="paid">المسدد</th><th data-i18n="remaining">المتبقي</th><th data-i18n="status">الحالة</th><th data-i18n="actions">إجراءات</th></tr></thead><tbody id="invoiceRows"></tbody></table></div></section></main>
-<dialog id="invoiceDialog"><form id="invoiceForm"><div class="dialog-head"><h3 data-i18n="newInvoice">فاتورة جديدة</h3><button type="button" class="icon" data-close="invoiceDialog">×</button></div><div class="grid"><label><span data-i18n="invoiceNo">رقم الفاتورة</span><input id="invoiceNo" readonly></label><label><span data-i18n="date">التاريخ</span><input id="invoiceDate" type="date" required></label><label class="span2"><span data-i18n="customerName">اسم العميل</span><input id="customerName" class="auto-dir" required></label><label class="span2"><span data-i18n="description">البيان / الوصف</span><textarea id="description" class="auto-dir" rows="4" required></textarea></label><label><span data-i18n="amount">المبلغ</span><input id="amount" type="number" step="0.001" min="0" required></label><label><span data-i18n="vat">الضريبة %</span><input id="vatRate" type="number" step="0.01" min="0" value="0"></label></div><div class="totals-preview"><span data-i18n="total">الإجمالي</span><strong id="invoiceTotalPreview">0.000 د.ب</strong></div><div class="actions"><button type="button" class="secondary" data-close="invoiceDialog" data-i18n="cancel">إلغاء</button><button type="submit" class="primary" data-i18n="saveInvoice">حفظ الفاتورة</button></div></form></dialog>
-<dialog id="paymentDialog"><form id="paymentForm"><div class="dialog-head"><h3 data-i18n="recordPayment">تسجيل سداد</h3><button type="button" class="icon" data-close="paymentDialog">×</button></div><input type="hidden" id="paymentInvoiceId"><div class="grid"><label><span data-i18n="date">التاريخ</span><input id="paymentDate" type="date" required></label><label><span data-i18n="amount">المبلغ</span><input id="paymentAmount" type="number" step="0.001" min="0.001" required></label><label class="span2"><span data-i18n="paymentMethod">طريقة الدفع</span><select id="paymentMethod"><option>Bank Transfer</option><option>BenefitPay</option><option>Cash</option><option>Cheque</option></select></label></div><div class="actions"><button type="button" class="secondary" data-close="paymentDialog" data-i18n="cancel">إلغاء</button><button type="submit" class="primary" data-i18n="recordPayment">تسجيل السداد</button></div></form></dialog>
-<section id="printArea" class="invoice-print"></section><script src="app.js"></script></body></html>
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AO Accounts</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <img src="./ao-logo.jpg" class="logo" alt="AO Logo">
+    <div>
+      <h1>AO Accounts</h1>
+      <p>Invoices • Payments • Balances</p>
+    </div>
+  </div>
+  <div class="top-actions">
+    <div class="lang-switch">
+      <button id="arBtn" class="lang-btn active">AR</button>
+      <button id="enBtn" class="lang-btn">EN</button>
+    </div>
+    <button id="newInvoiceBtn" class="primary" data-i18n="newInvoice">+ فاتورة جديدة</button>
+  </div>
+</header>
+
+<main class="container">
+  <section class="hero">
+    <div>
+      <span class="eyebrow" data-i18n="overview">نظرة عامة</span>
+      <h2 data-i18n="dashboardTitle">لوحة الفواتير والأرصدة</h2>
+      <p data-i18n="dashboardSubtitle">متابعة الفواتير، المبالغ المسددة، والأرصدة المتبقية.</p>
+    </div>
+  </section>
+
+  <section class="stats">
+    <article class="card">
+      <div class="stat-icon">INV</div>
+      <div><span data-i18n="totalInvoices">إجمالي الفواتير</span><strong id="statInvoices">0.000 د.ب</strong></div>
+    </article>
+    <article class="card">
+      <div class="stat-icon">PAID</div>
+      <div><span data-i18n="totalPaid">إجمالي المسدد</span><strong id="statPaid">0.000 د.ب</strong></div>
+    </article>
+    <article class="card">
+      <div class="stat-icon">BAL</div>
+      <div><span data-i18n="totalBalance">إجمالي المتبقي</span><strong id="statBalance">0.000 د.ب</strong></div>
+    </article>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div>
+        <span class="eyebrow" data-i18n="records">السجلات</span>
+        <h2 data-i18n="invoices">الفواتير</h2>
+      </div>
+      <input id="search" class="auto-dir" data-i18n-placeholder="searchPlaceholder" placeholder="بحث بالعميل أو رقم الفاتورة">
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th data-i18n="invoiceNo">رقم الفاتورة</th>
+            <th data-i18n="date">التاريخ</th>
+            <th data-i18n="customer">العميل</th>
+            <th data-i18n="total">الإجمالي</th>
+            <th data-i18n="paid">المسدد</th>
+            <th data-i18n="remaining">المتبقي</th>
+            <th data-i18n="status">الحالة</th>
+            <th data-i18n="actions">إجراءات</th>
+          </tr>
+        </thead>
+        <tbody id="invoiceRows"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<dialog id="invoiceDialog">
+  <form id="invoiceForm">
+    <div class="dialog-head">
+      <div>
+        <span class="eyebrow" data-i18n="invoice">فاتورة</span>
+        <h3 id="invoiceDialogTitle" data-i18n="newInvoiceTitle">فاتورة جديدة</h3>
+      </div>
+      <button type="button" class="icon" data-close="invoiceDialog">×</button>
+    </div>
+
+    <input type="hidden" id="invoiceId">
+    <div class="grid">
+      <label><span data-i18n="invoiceNo">رقم الفاتورة</span><input id="invoiceNo" readonly></label>
+      <label><span data-i18n="date">التاريخ</span><input id="invoiceDate" type="date" required></label>
+      <label class="span2"><span data-i18n="customerName">اسم العميل</span><input id="customerName" class="auto-dir" required></label>
+      <label class="span2"><span data-i18n="description">البيان / الوصف</span><textarea id="description" class="auto-dir" rows="4" required></textarea></label>
+      <label><span data-i18n="amount">المبلغ</span><input id="amount" type="number" step="0.001" min="0" required></label>
+      <label><span data-i18n="vat">الضريبة %</span><input id="vatRate" type="number" step="0.01" min="0" value="0"></label>
+    </div>
+
+    <div class="totals-preview">
+      <span data-i18n="total">الإجمالي</span>
+      <strong id="invoiceTotalPreview">0.000 د.ب</strong>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="secondary" data-close="invoiceDialog" data-i18n="cancel">إلغاء</button>
+      <button type="submit" class="primary" data-i18n="saveInvoice">حفظ الفاتورة</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="paymentDialog">
+  <form id="paymentForm">
+    <div class="dialog-head">
+      <div>
+        <span class="eyebrow" data-i18n="payment">سداد</span>
+        <h3 data-i18n="recordPayment">تسجيل سداد</h3>
+      </div>
+      <button type="button" class="icon" data-close="paymentDialog">×</button>
+    </div>
+    <input type="hidden" id="paymentInvoiceId">
+    <div class="grid">
+      <label><span data-i18n="date">التاريخ</span><input id="paymentDate" type="date" required></label>
+      <label><span data-i18n="amount">المبلغ</span><input id="paymentAmount" type="number" step="0.001" min="0.001" required></label>
+      <label class="span2"><span data-i18n="paymentMethod">طريقة الدفع</span>
+        <select id="paymentMethod">
+          <option>Bank Transfer</option>
+          <option>BenefitPay</option>
+          <option>Cash</option>
+          <option>Cheque</option>
+        </select>
+      </label>
+      <label class="span2"><span data-i18n="paymentNote">ملاحظة السداد</span><input id="paymentNote" class="auto-dir"></label>
+    </div>
+    <div class="actions">
+      <button type="button" class="secondary" data-close="paymentDialog" data-i18n="cancel">إلغاء</button>
+      <button type="submit" class="primary" data-i18n="recordPayment">تسجيل السداد</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="previewDialog" class="preview-dialog">
+  <div class="preview-toolbar">
+    <button type="button" class="secondary" data-close="previewDialog" data-i18n="close">إغلاق</button>
+    <button type="button" class="primary" id="printFromPreview" data-i18n="printSavePdf">طباعة / حفظ PDF</button>
+  </div>
+  <div id="invoicePreview" class="invoice-page"></div>
+</dialog>
+
+<section id="printArea"></section>
+<script src="app.js"></script>
+</body>
+</html>
