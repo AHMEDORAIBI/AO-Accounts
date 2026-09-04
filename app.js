@@ -326,22 +326,22 @@ function invoiceHtml(inv, printable=false){
         <div class="desc-text" dir="auto">${esc(inv.description)}</div>
       </section>
 
-      <div class="inv-main-grid letterhead-grid">
-        <div class="payments-box">
-          <div class="section-title">${t('paymentsPrint')}</div>
-          <table class="mini-table">
-            <thead><tr>
-              <th>${t('date')}</th>
-              <th>${t('methodPrint')}</th>
-              <th>${t('notePrint')}</th>
-              <th>${t('amountPrint')}</th>
-              ${actionsHeader}
-            </tr></thead>
-            <tbody>${payRows}</tbody>
-          </table>
-        </div>
+      <div class="payments-section">
+        <div class="section-title">${t('paymentsPrint')}</div>
+        <table class="mini-table professional-payments">
+          <thead><tr>
+            <th>${t('date')}</th>
+            <th>${t('methodPrint')}</th>
+            <th>${t('notePrint')}</th>
+            <th>${t('amountPrint')}</th>
+            ${actionsHeader}
+          </tr></thead>
+          <tbody>${payRows}</tbody>
+        </table>
+      </div>
 
-        <div class="summary-box modern">
+      <div class="invoice-summary-wrap">
+        <div class="summary-box modern professional-summary">
           <div class="summary-caption">${currentLang==='ar'?'ملخص الفاتورة':'Invoice Summary'}</div>
           <div class="summary-row total"><span>${t('totalPrint')}</span><span>${money(total(inv))}</span></div>
           <div class="summary-row"><span>${t('paidPrint')}</span><span>${money(paid(inv))}</span></div>
