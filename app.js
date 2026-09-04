@@ -289,61 +289,66 @@ function invoiceHtml(inv, printable=false){
   const pays=(inv.payments||[]);
   const actionsHeader = printable ? '' : `<th style="width:16%">${t('actions')}</th>`;
   const payRows=pays.length?pays.map(p=>`<tr>
-      <td>${p.date}</td><td>${esc(p.method)}</td><td dir="auto">${esc(p.note||'—')}</td><td>${money(p.amount)}</td>
+      <td>${p.date}</td>
+      <td>${esc(p.method)}</td>
+      <td dir="auto">${esc(p.note||'—')}</td>
+      <td>${money(p.amount)}</td>
       ${printable?'':`<td class="payment-actions"><button class="mini-action" onclick="editPayment('${inv.id}','${p.id}')">${t('edit')}</button><button class="mini-action danger-link" onclick="deletePayment('${inv.id}','${p.id}')">${t('delete')}</button></td>`}
     </tr>`).join(''):
     `<tr><td colspan="${printable?4:5}" style="text-align:center;color:#98a2b3">${t('noPayments')}</td></tr>`;
 
-  return `<div class="invoice-page" dir="${currentLang==='ar'?'rtl':'ltr'}">
-    <div class="inv-brandbar"></div>
-    <div class="inv-head">
-      <div class="inv-logo-wrap">
-        <img src="./ao-logo.jpg" alt="AO">
-      </div>
-      <div class="inv-title">
-        <div class="inv-label">${t('invoiceTitle')}</div>
-        <div class="inv-number">${inv.no}</div>
-        <div class="inv-date">${inv.date}</div>
-      </div>
-    </div>
+  return `<div class="invoice-page letterhead-page" dir="${currentLang==='ar'?'rtl':'ltr'}">
+    <img class="letterhead-bg" src="./letterhead.jpg" alt="">
+    <div class="invoice-content">
 
-    <div class="customer-strip">
-      <div>
-        <small>${t('customerPrint')}</small>
-        <strong dir="auto">${esc(inv.customer)}</strong>
-      </div>
-      <div>
-        <small>${t('statusPrint')}</small>
-        <span class="inv-status ${cl}">${st}</span>
-      </div>
-    </div>
-
-    <section class="desc-card">
-      <div class="desc-title">${t('descriptionPrint')}</div>
-      <div class="desc-text" dir="auto">${esc(inv.description)}</div>
-    </section>
-
-    <div class="inv-main-grid">
-      <div class="payments-box">
-        <div class="section-title">${t('paymentsPrint')}</div>
-        <table class="mini-table">
-          <thead><tr><th>${t('date')}</th><th>${t('methodPrint')}</th><th>${t('notePrint')}</th><th>${t('amountPrint')}</th>${actionsHeader}</tr></thead>
-          <tbody>${payRows}</tbody>
-        </table>
+      <div class="doc-heading">
+        <div>
+          <div class="doc-title">${t('invoiceTitle')}</div>
+          <div class="doc-number">${inv.no}</div>
+        </div>
+        <div class="doc-date">${inv.date}</div>
       </div>
 
-      <div class="summary-box modern">
-        <div class="summary-caption">${currentLang==='ar'?'ملخص الفاتورة':'Invoice Summary'}</div>
-        <div class="summary-row"><span>${t('subtotalPrint')}</span><span>${money(subtotal)}</span></div>
-        <div class="summary-row total"><span>${t('totalPrint')}</span><span>${money(total(inv))}</span></div>
-        <div class="summary-row"><span>${t('paidPrint')}</span><span>${money(paid(inv))}</span></div>
-        <div class="summary-row balance"><span>${t('remainingPrint')}</span><span>${money(balance(inv))}</span></div>
+      <div class="customer-strip letterhead-customer">
+        <div>
+          <small>${t('customerPrint')}</small>
+          <strong dir="auto">${esc(inv.customer)}</strong>
+        </div>
+        <div>
+          <small>${t('statusPrint')}</small>
+          <span class="inv-status ${cl}">${st}</span>
+        </div>
       </div>
-    </div>
 
-    <div class="thankyou">${currentLang==='ar'?'شكرًا لتعاملكم معنا':'Thank you for your business'}</div>
-    <div class="inv-footer">
-      <strong>AO • AHMED ALORAIBI • EXPERT ACCOUNTANT</strong>
+      <section class="desc-card letterhead-desc">
+        <div class="desc-title">${t('descriptionPrint')}</div>
+        <div class="desc-text" dir="auto">${esc(inv.description)}</div>
+      </section>
+
+      <div class="inv-main-grid letterhead-grid">
+        <div class="payments-box">
+          <div class="section-title">${t('paymentsPrint')}</div>
+          <table class="mini-table">
+            <thead><tr>
+              <th>${t('date')}</th>
+              <th>${t('methodPrint')}</th>
+              <th>${t('notePrint')}</th>
+              <th>${t('amountPrint')}</th>
+              ${actionsHeader}
+            </tr></thead>
+            <tbody>${payRows}</tbody>
+          </table>
+        </div>
+
+        <div class="summary-box modern">
+          <div class="summary-caption">${currentLang==='ar'?'ملخص الفاتورة':'Invoice Summary'}</div>
+          <div class="summary-row total"><span>${t('totalPrint')}</span><span>${money(total(inv))}</span></div>
+          <div class="summary-row"><span>${t('paidPrint')}</span><span>${money(paid(inv))}</span></div>
+          <div class="summary-row balance"><span>${t('remainingPrint')}</span><span>${money(balance(inv))}</span></div>
+        </div>
+      </div>
+
+      <div class="thankyou letterhead-thankyou">${currentLang==='ar'?'شكرًا لتعاملكم معنا':'Thank you for your business'}</div>
     </div>
   </div>`;
 }
