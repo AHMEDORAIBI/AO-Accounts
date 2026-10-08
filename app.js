@@ -360,16 +360,18 @@ window.openPreview=id=>{
 }
 $('printFromPreview').onclick=async()=>{
   const inv=data.invoices.find(x=>x.id===previewInvoiceId);if(!inv)return;
-  $('printArea').innerHTML=invoiceHtml(inv,true);
-  const imgs=[...$('printArea').querySelectorAll('img')];
-  await Promise.all(imgs.map(img=>{
-    if(img.complete) return Promise.resolve();
-    return new Promise(resolve=>{
-      img.onload=resolve;
-      img.onerror=resolve;
-    });
-  }));
-  setTimeout(()=>window.print(),180);
+  try{
+    if(document.fonts && document.fonts.ready) await document.fonts.ready;
+    await buildPaginatedInvoice(inv);
+    const imgs=[...$('printArea').querySelectorAll('img')];
+    await Promise.all(imgs.map(img=>img.complete?Promise.resolve():new Promise(resolve=>{
+      img.onload=resolve;img.onerror=resolve;
+    })));
+    window.print();
+  }catch(err){
+    console.error(err);
+    alert(currentLang==='ar'?'تعذرت تهيئة صفحات الطباعة. يرجى إعادة المحاولة.':'Could not prepare the print pages. Please try again.');
+  }
 }
 $('search').addEventListener('input',render);
 applyLanguage();
@@ -379,3 +381,115 @@ window.addEventListener('afterprint',()=>{
   const pa=document.getElementById('printArea');
   if(pa) pa.innerHTML='';
 });
+
+
+// V4.0: Measure actual rendered content before committing each A4 print page.
+async function buildPaginatedInvoice(inv){
+  const root=$('printArea');
+  root.innerHTML='';
+  const bg=typeof LETTERHEAD_DATA!=='undefined'?LETTERHEAD_DATA:'./letterhead.jpg';
+  const dir=currentLang==='ar'?'rtl':'ltr';
+  const page=()=>{
+    const sheet=document.createElement('div');
+    sheet.className='ao-print-page';
+    sheet.dir=dir;
+    sheet.innerHTML=`<img class="ao-page-letterhead" src="${bg}" alt="">
+      <div class="ao-page-body"></div>`;
+    root.appendChild(sheet);
+    return sheet.querySelector('.ao-page-body');
+  };
+  let body=page();
+  const maxHeight=body.getBoundingClientRect().height;
+  const fits=()=>body.scrollHeight<=maxHeight+1;
+  const append=(node)=>{
+    body.appendChild(node);
+    if(fits())return true;
+    body.removeChild(node);
+    return false;
+  };
+  const next=()=>{body=page();};
+  const node=(markup)=>{
+    const tpl=document.createElement('template');tpl.innerHTML=markup.trim();
+    return tpl.content.firstElementChild;
+  };
+  const put=(markup)=>{
+    const el=node(markup);
+    if(!append(el)){next();body.appendChild(el);}
+    return el;
+  };
+  const heading=`<section class="ao-print-heading">
+    <div><h1>${t('invoiceTitle')}</h1><strong>${esc(inv.no)}</strong></div>
+    <span>${esc(inv.date)}</span>
+  </section>`;
+  put(heading);
+  put(`<section class="ao-print-customer">
+    <div><b>${t('customerPrint')}</b><span dir="auto">${esc(inv.customer)}</span></div>
+    <div><b>${t('statusPrint')}</b><span>${status(inv)[0]}</span></div>
+  </section>`);
+  const descTitle=`<div class="ao-section-heading">${t('descriptionPrint')}</div>`;
+  put(descTitle);
+  // Split description on word boundaries when necessary, without clipping the footer.
+  const words=String(inv.description||'').split(/(\s+)/).filter(Boolean);
+  let paragraph=node('<div class="ao-description" dir="auto"></div>');
+  body.appendChild(paragraph);
+  for(const word of words){
+    const prior=paragraph.textContent;
+    paragraph.textContent+=word;
+    if(!fits()){
+      paragraph.textContent=prior;
+      if(!prior.trim()){
+        // A single unbreakable token is wrapped by CSS.
+        paragraph.textContent=word;
+      }else{
+        next();
+        put(`<div class="ao-section-heading">${t('descriptionPrint')} (${currentLang==='ar'?'تابع':'continued'})</div>`);
+        paragraph=node('<div class="ao-description" dir="auto"></div>');
+        body.appendChild(paragraph);
+        paragraph.textContent=word;
+      }
+    }
+  }
+  const methodName=(v)=>{
+    if(currentLang!=='ar')return v;
+    return ({'Bank Transfer':'تحويل بنكي','Cash':'نقدًا','Cheque':'شيك','BenefitPay':'بنفت بي'})[v]||v;
+  };
+  const th=`<thead><tr><th>${t('date')}</th><th>${t('methodPrint')}</th><th>${t('notePrint')}</th><th>${t('amountPrint')}</th></tr></thead>`;
+  let table;
+  const newTable=(continued=false)=>{
+    const heading=node(`<div class="ao-payments-heading">${t('paymentsPrint')}${continued?' ('+(currentLang==='ar'?'تابع':'continued')+')':''}</div>`);
+    body.appendChild(heading);
+    table=node(`<table class="ao-payments-table"><colgroup><col style="width:18%"><col style="width:22%"><col style="width:40%"><col style="width:20%"></colgroup>${th}<tbody></tbody></table>`);
+    body.appendChild(table);
+  };
+  newTable();
+  const payments=inv.payments||[];
+  if(!payments.length){
+    table.querySelector('tbody').appendChild(node(`<tr><td colspan="4">${t('noPayments')}</td></tr>`));
+  }
+  for(const p of payments){
+    const row=node(`<tr><td class="nowrap" dir="ltr">${esc(p.date)}</td>
+      <td class="nowrap">${esc(methodName(p.method))}</td>
+      <td dir="auto">${esc(p.note||'—')}</td>
+      <td class="nowrap">${money(p.amount)}</td></tr>`);
+    table.querySelector('tbody').appendChild(row);
+    if(!fits()){
+      row.remove();
+      next();
+      newTable(true);
+      table.querySelector('tbody').appendChild(row);
+    }
+  }
+  const summary=node(`<section class="ao-print-summary">
+    <div class="ao-summary-head">${currentLang==='ar'?'ملخص الفاتورة':'Invoice Summary'}</div>
+    <div><span>${t('totalPrint')}</span><b>${money(total(inv))}</b></div>
+    <div><span>${t('paidPrint')}</span><b>${money(paid(inv))}</b></div>
+    <div class="ao-balance"><span>${t('remainingPrint')}</span><b>${money(balance(inv))}</b></div>
+  </section>`);
+  if(!append(summary)){next();body.appendChild(summary);}
+  const thanks=node(`<div class="ao-print-thanks">${currentLang==='ar'?'شكرًا لتعاملكم معنا':'Thank you for your business'}</div>`);
+  if(!append(thanks)){next();body.appendChild(thanks);}
+  // Avoid leaving blank pages from tentative layout.
+  for(const sheet of [...root.querySelectorAll('.ao-print-page')]){
+    if(!sheet.querySelector('.ao-page-body').textContent.trim())sheet.remove();
+  }
+}

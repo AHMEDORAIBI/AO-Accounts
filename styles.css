@@ -635,3 +635,55 @@ html[dir="ltr"] .invoice-summary-wrap{
     margin-top:12px!important;
   }
 }
+
+/* AO V4.0: Multi-page Amiri invoice. Existing dashboard remains unchanged. */
+.invoice-page,.invoice-page *,.ao-print-page,.ao-print-page *{
+ font-family:'Amiri',serif!important;
+}
+.invoice-page h1,.invoice-page h2,.invoice-page h3,
+.invoice-page th,.invoice-page .section-title,
+.invoice-page .desc-title,.invoice-page .summary-caption,
+.ao-print-page h1,.ao-print-page th,.ao-section-heading,
+.ao-payments-heading,.ao-summary-head{font-weight:700!important}
+#printArea{display:none}
+.ao-print-page{
+ width:210mm;height:297mm;position:relative;overflow:hidden;
+ margin:0;background:white;box-sizing:border-box;break-after:page;
+ page-break-after:always;
+}
+.ao-print-page:last-child{break-after:auto;page-break-after:auto}
+.ao-page-letterhead{position:absolute;inset:0;width:210mm;height:297mm;object-fit:fill;z-index:0}
+.ao-page-body{
+ position:absolute;z-index:1;top:57mm;left:16mm;right:16mm;bottom:35mm;
+ overflow:hidden;box-sizing:border-box;font-size:13pt;line-height:1.45;
+}
+.ao-print-heading{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #b99a54;padding-bottom:3mm;margin-bottom:4mm}
+.ao-print-heading h1{font-size:22pt;margin:0;color:#15385f}
+.ao-print-heading strong{font-size:12pt}
+.ao-print-customer{display:grid;grid-template-columns:1.5fr 1fr;gap:5mm;margin-bottom:4mm}
+.ao-print-customer>div{padding:2mm 3mm;border:1px solid #e1e4e8;background:rgba(255,255,255,.94)}
+.ao-print-customer b,.ao-print-customer span{display:block}
+.ao-section-heading{font-size:16pt;color:#15385f;border-bottom:1px solid #c9a45c;margin:2mm 0}
+.ao-description{white-space:pre-wrap;overflow-wrap:anywhere;min-height:8mm;margin-bottom:3mm}
+.ao-payments-heading{font-size:16pt;color:#15385f;margin:4mm 0 2mm;font-weight:700}
+.ao-payments-table{width:100%;border-collapse:collapse;table-layout:fixed;background:rgba(255,255,255,.96);font-size:12pt}
+.ao-payments-table th,.ao-payments-table td{border:1px solid #d5dce5;padding:2mm 2mm;vertical-align:middle;line-height:1.4}
+.ao-payments-table th{background:#f1f4f8;color:#15385f;font-size:12pt}
+.ao-payments-table .nowrap{white-space:nowrap}
+.ao-payments-table td:nth-child(3){overflow-wrap:anywhere}
+.ao-print-summary{width:43%;margin-top:5mm;margin-inline-start:0;border:1px solid #d9dee7;background:rgba(255,255,255,.97)}
+.ao-summary-head{padding:2mm 3mm;background:#f5ead3;color:#15385f;font-size:16pt}
+.ao-print-summary>div:not(.ao-summary-head){display:flex;justify-content:space-between;gap:2mm;padding:2mm 3mm;border-top:1px solid #e4e7ec}
+.ao-print-summary .ao-balance{background:#15385f;color:white;font-weight:700}
+.ao-print-thanks{text-align:center;color:#a98849;font-weight:700;margin-top:5mm}
+@media print{
+ @page{size:A4 portrait;margin:0}
+ html,body{width:210mm!important;height:auto!important;margin:0!important;padding:0!important;overflow:visible!important}
+ body>*:not(#printArea){display:none!important}
+ #printArea{display:block!important;position:static!important;inset:auto!important;width:210mm!important;height:auto!important;overflow:visible!important;margin:0!important;padding:0!important}
+ #printArea .ao-print-page{display:block!important;visibility:visible!important;position:relative!important;width:210mm!important;height:297mm!important;min-height:297mm!important;max-height:297mm!important;transform:none!important;zoom:1!important;overflow:hidden!important;break-after:page!important;page-break-after:always!important}
+ #printArea .ao-print-page:last-child{break-after:auto!important;page-break-after:auto!important}
+ #printArea .ao-print-page *{visibility:visible!important}
+ #printArea .ao-page-letterhead{display:block!important;visibility:visible!important;position:absolute!important;inset:0!important;width:210mm!important;height:297mm!important;object-fit:fill!important;print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important}
+ #printArea .ao-page-body{position:absolute!important;top:57mm!important;bottom:35mm!important;left:16mm!important;right:16mm!important;overflow:hidden!important}
+}
