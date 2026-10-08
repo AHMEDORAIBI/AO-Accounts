@@ -699,3 +699,22 @@ html[dir="ltr"] .invoice-summary-wrap{
  #printArea .ao-payments-table .ao-note-text{white-space:pre-wrap!important;overflow-wrap:anywhere!important;word-break:break-word!important;max-width:100%!important}
  #printArea .ao-payments-table tr{break-inside:avoid!important;page-break-inside:avoid!important}
 }
+
+/* V4.2: Fix the ACTUAL browser PDF print layout and pre-print measurement. */
+@media screen{
+ #printArea.ao-measuring{display:block!important;visibility:visible!important;position:fixed!important;left:-10000px!important;top:0!important;width:210mm!important;height:auto!important;overflow:visible!important;pointer-events:none!important;z-index:-1!important;}
+ #printArea.ao-measuring .ao-print-page{display:block!important;}
+}
+.ao-payments-table{table-layout:fixed!important;width:100%!important;max-width:100%!important;border-spacing:0!important;}
+.ao-payments-table colgroup col:nth-child(1){width:18%!important;}
+.ao-payments-table colgroup col:nth-child(2){width:22%!important;}
+.ao-payments-table colgroup col:nth-child(3){width:40%!important;}
+.ao-payments-table colgroup col:nth-child(4){width:20%!important;}
+.ao-payments-table td.ao-payment-note{width:auto!important;max-width:none!important;min-width:0!important;overflow:visible!important;white-space:normal!important;box-sizing:border-box!important;}
+.ao-payments-table td.ao-payment-note .ao-note-text{display:block!important;width:auto!important;max-width:100%!important;min-width:0!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important;word-break:normal!important;line-break:auto!important;unicode-bidi:plaintext!important;line-height:1.55!important;}
+@media print{
+ #printArea .ao-payments-table{table-layout:fixed!important;width:100%!important;}
+ #printArea .ao-payments-table td.ao-payment-note{max-width:none!important;width:auto!important;overflow:visible!important;white-space:normal!important;}
+ #printArea .ao-payments-table td.ao-payment-note .ao-note-text{max-width:100%!important;width:auto!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important;word-break:normal!important;}
+ #printArea .ao-payments-table td:nth-child(4){white-space:nowrap!important;text-align:center!important;}
+}

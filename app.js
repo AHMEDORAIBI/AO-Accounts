@@ -367,6 +367,7 @@ $('printFromPreview').onclick=async()=>{
     await Promise.all(imgs.map(img=>img.complete?Promise.resolve():new Promise(resolve=>{
       img.onload=resolve;img.onerror=resolve;
     })));
+    $('printArea').classList.remove('ao-measuring');
     window.print();
   }catch(err){
     console.error(err);
@@ -379,7 +380,7 @@ applyLanguage();
 
 window.addEventListener('afterprint',()=>{
   const pa=document.getElementById('printArea');
-  if(pa) pa.innerHTML='';
+  if(pa){pa.innerHTML='';pa.classList.remove('ao-measuring');}
 });
 
 
@@ -387,6 +388,7 @@ window.addEventListener('afterprint',()=>{
 async function buildPaginatedInvoice(inv){
   const root=$('printArea');
   root.innerHTML='';
+  root.classList.add('ao-measuring');
   const bg=typeof LETTERHEAD_DATA!=='undefined'?LETTERHEAD_DATA:'./letterhead.jpg';
   const dir=currentLang==='ar'?'rtl':'ltr';
   const page=()=>{
