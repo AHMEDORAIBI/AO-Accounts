@@ -261,7 +261,7 @@ window.openPaymentsManager=id=>{
         <tbody>${pays.map(p=>`<tr>
           <td>${p.date}</td>
           <td>${esc(p.method)}</td>
-          <td dir="auto">${esc(p.note||'—')}</td>
+          <td class="ao-payment-note"><div class="ao-note-text" dir="auto">${esc(p.note||'—')}</div></td>
           <td>${money(p.amount)}</td>
           <td>
             <button class="action edit" onclick="editPayment('${inv.id}','${p.id}')">${t('edit')}</button>
@@ -292,7 +292,7 @@ function invoiceHtml(inv, printable=false){
   const payRows=pays.length?pays.map(p=>`<tr>
       <td>${p.date}</td>
       <td>${esc(p.method)}</td>
-      <td dir="auto">${esc(p.note||'—')}</td>
+      <td class="ao-payment-note"><div class="ao-note-text" dir="auto">${esc(p.note||'—')}</div></td>
       <td>${money(p.amount)}</td>
       ${printable?'':`<td class="payment-actions"><button class="mini-action" onclick="editPayment('${inv.id}','${p.id}')">${t('edit')}</button><button class="mini-action danger-link" onclick="deletePayment('${inv.id}','${p.id}')">${t('delete')}</button></td>`}
     </tr>`).join(''):
@@ -469,7 +469,7 @@ async function buildPaginatedInvoice(inv){
   for(const p of payments){
     const row=node(`<tr><td class="nowrap" dir="ltr">${esc(p.date)}</td>
       <td class="nowrap">${esc(methodName(p.method))}</td>
-      <td dir="auto">${esc(p.note||'—')}</td>
+      <td class="ao-payment-note"><div class="ao-note-text" dir="auto">${esc(p.note||'—')}</div></td>
       <td class="nowrap">${money(p.amount)}</td></tr>`);
     table.querySelector('tbody').appendChild(row);
     if(!fits()){

@@ -687,3 +687,15 @@ html[dir="ltr"] .invoice-summary-wrap{
  #printArea .ao-page-letterhead{display:block!important;visibility:visible!important;position:absolute!important;inset:0!important;width:210mm!important;height:297mm!important;object-fit:fill!important;print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important}
  #printArea .ao-page-body{position:absolute!important;top:57mm!important;bottom:35mm!important;left:16mm!important;right:16mm!important;overflow:hidden!important}
 }
+
+/* V4.1: Contain lengthy payment notes strictly within their own cell. */
+.ao-payments-table{table-layout:fixed!important;width:100%!important;max-width:100%!important}
+.ao-payments-table td,.ao-payments-table th{box-sizing:border-box!important}
+.ao-payments-table td.ao-payment-note{width:40%!important;max-width:0!important;min-width:0!important;white-space:normal!important;overflow:hidden!important;vertical-align:top!important}
+.ao-payments-table .ao-note-text{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important;word-break:break-word!important;hyphens:auto!important;line-height:1.55!important;text-align:start!important;unicode-bidi:plaintext!important}
+.ao-payments-table td:nth-child(4){text-align:center!important;white-space:nowrap!important}
+@media print{
+ #printArea .ao-payments-table td.ao-payment-note{max-width:0!important;overflow:hidden!important;white-space:normal!important}
+ #printArea .ao-payments-table .ao-note-text{white-space:pre-wrap!important;overflow-wrap:anywhere!important;word-break:break-word!important;max-width:100%!important}
+ #printArea .ao-payments-table tr{break-inside:avoid!important;page-break-inside:avoid!important}
+}
