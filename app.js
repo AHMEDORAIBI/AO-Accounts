@@ -44,7 +44,7 @@ dashboardTitle:"لوحة الفواتير والأرصدة",dashboardSubtitle:"�
 totalInvoices:"إجمالي الفواتير",totalPaid:"إجمالي المسدد",totalBalance:"إجمالي المتبقي",records:"السجلات",invoices:"الفواتير",
 searchPlaceholder:"بحث بالعميل أو رقم الفاتورة",invoiceNo:"رقم الفاتورة",date:"التاريخ",customer:"العميل",total:"الإجمالي",paid:"المسدد",
 remaining:"المتبقي",status:"الحالة",actions:"إجراءات",invoice:"فاتورة",customerName:"اسم العميل",description:"البيان / الوصف",
-amount:"المبلغ",cancel:"إلغاء",saveInvoice:"حفظ الفاتورة",payment:"سداد",recordPayment:"تسجيل سداد",
+amount:"المبلغ",discount:"الخصم (د.ب)",beforeDiscount:"المبلغ قبل الخصم",cancel:"إلغاء",saveInvoice:"حفظ الفاتورة",payment:"سداد",recordPayment:"تسجيل سداد",
 paymentMethod:"طريقة الدفع",paymentNote:"ملاحظة السداد",pay:"سداد",preview:"معاينة",edit:"تعديل",delete:"حذف",
 editPayment:"تعديل السداد",deletePayment:"حذف السداد",savePayment:"حفظ تعديل السداد",deletePaymentConfirm:"هل تريد حذف هذه الدفعة؟",managePayments:"إدارة السداد",payments:"الدفعات",noPaymentsManage:"لا توجد دفعات مسجلة لهذه الفاتورة.",
 unpaid:"غير مدفوعة",partial:"مدفوعة جزئيًا",paidFull:"مدفوعة بالكامل",noInvoices:"لا توجد فواتير حتى الآن",
@@ -60,7 +60,7 @@ dashboardTitle:"Invoices & Balances Dashboard",dashboardSubtitle:"Track invoices
 totalInvoices:"Total Invoices",totalPaid:"Total Paid",totalBalance:"Outstanding Balance",records:"Records",invoices:"Invoices",
 searchPlaceholder:"Search by customer or invoice number",invoiceNo:"Invoice No.",date:"Date",customer:"Customer",total:"Total",paid:"Paid",
 remaining:"Remaining",status:"Status",actions:"Actions",invoice:"Invoice",customerName:"Customer Name",description:"Description",
-amount:"Amount",cancel:"Cancel",saveInvoice:"Save Invoice",payment:"Payment",recordPayment:"Record Payment",
+amount:"Amount",discount:"Discount (BHD)",beforeDiscount:"Before discount",cancel:"Cancel",saveInvoice:"Save Invoice",payment:"Payment",recordPayment:"Record Payment",
 paymentMethod:"Payment Method",paymentNote:"Payment Note",pay:"Pay",preview:"Preview",edit:"Edit",delete:"Delete",
 editPayment:"Edit Payment",deletePayment:"Delete Payment",savePayment:"Save Payment Changes",deletePaymentConfirm:"Delete this payment?",managePayments:"Manage Payments",payments:"Payments",noPaymentsManage:"No payments recorded for this invoice.",
 unpaid:"Unpaid",partial:"Partially Paid",paidFull:"Paid in Full",noInvoices:"No invoices yet",
@@ -82,7 +82,8 @@ function nextNo(){
   const n=(nums.length?Math.max(...nums):0)+1;
   return `AO-INV-${y}-${String(n).padStart(4,'0')}`;
 }
-function total(inv){return Number(inv.amount||0)}
+function discount(inv){return Math.max(0,Math.min(Number(inv.discount||0),Number(inv.amount||0)))}
+function total(inv){return Math.max(0,Math.round((Number(inv.amount||0)-discount(inv))*1000)/1000)}
 function paid(inv){return (inv.payments||[]).reduce((s,p)=>s+Number(p.amount||0),0)}
 function balance(inv){return Math.max(0,total(inv)-paid(inv))}
 function status(inv){
@@ -144,6 +145,7 @@ function render(){
 
 $('newInvoiceBtn').onclick=()=>{
   $('invoiceForm').reset();
+  $('discount').value='0.000';
   $('invoiceId').value='';
   $('invoiceNo').value=nextNo();
   $('invoiceDate').value=today();
@@ -153,9 +155,10 @@ $('newInvoiceBtn').onclick=()=>{
 }
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$(b.dataset.close).close());
 $('amount').addEventListener('input',calcPreview);
+$('discount').addEventListener('input',calcPreview);
 function calcPreview(){
-  const a=Number($('amount').value||0);
-  $('invoiceTotalPreview').textContent=money(a);
+  const a=Number($('amount').value||0),d=Number($('discount').value||0);
+  $('invoiceTotalPreview').textContent=money(Math.max(0,a-d));
 }
 $('invoiceForm').onsubmit=e=>{
   e.preventDefault();
@@ -164,18 +167,22 @@ $('invoiceForm').onsubmit=e=>{
     const inv=data.invoices.find(x=>x.id===id);
     if(!inv)return;
     const newAmount=Number($('amount').value);
-    const newTotal=newAmount;
+    const newDiscount=Number($('discount').value||0);
+    if(!Number.isFinite(newDiscount)||newDiscount<0||newDiscount>newAmount){alert(currentLang==='ar'?'الخصم لا يمكن أن يتجاوز مبلغ الفاتورة.':'Discount cannot exceed invoice amount.');return;}
+    const newTotal=Math.round((newAmount-newDiscount)*1000)/1000;
     if(newTotal+0.0005<paid(inv)){
       alert(currentLang==='ar'?'لا يمكن تخفيض إجمالي الفاتورة إلى أقل من المبلغ المسدد.':'Invoice total cannot be lower than the amount already paid.');
       return;
     }
     inv.date=$('invoiceDate').value; inv.customer=$('customerName').value.trim();
-    inv.description=$('description').value.trim(); inv.amount=newAmount;
+    inv.description=$('description').value.trim(); inv.amount=newAmount; inv.discount=newDiscount;
     inv.vatRate=0;
   }else{
+    const newAmount=Number($('amount').value),newDiscount=Number($('discount').value||0);
+    if(!Number.isFinite(newDiscount)||newDiscount<0||newDiscount>newAmount){alert(currentLang==='ar'?'الخصم لا يمكن أن يتجاوز مبلغ الفاتورة.':'Discount cannot exceed invoice amount.');return;}
     data.invoices.push({id:crypto.randomUUID(),no:$('invoiceNo').value,date:$('invoiceDate').value,
       customer:$('customerName').value.trim(),description:$('description').value.trim(),
-      amount:Number($('amount').value),vatRate:0,payments:[]});
+      amount:newAmount,discount:newDiscount,vatRate:0,payments:[]});
   }
   save();$('invoiceDialog').close();
 }
@@ -184,6 +191,7 @@ window.editInvoice=id=>{
   $('invoiceId').value=inv.id;$('invoiceNo').value=inv.no;$('invoiceDate').value=inv.date;
   $('customerName').value=inv.customer;$('description').value=inv.description;
   $('amount').value=Number(inv.amount).toFixed(3);
+  $('discount').value=Number(inv.discount||0).toFixed(3);
   $('invoiceDialogTitle').textContent=t('editInvoiceTitle');calcPreview();
   detectDirection($('customerName'));detectDirection($('description'));
   $('invoiceDialog').showModal();
@@ -343,6 +351,7 @@ function invoiceHtml(inv, printable=false){
       <div class="invoice-summary-wrap">
         <div class="summary-box modern professional-summary">
           <div class="summary-caption">${currentLang==='ar'?'ملخص الفاتورة':'Invoice Summary'}</div>
+          ${discount(inv)>0?`<div class="summary-row"><span>${t('beforeDiscount')}</span><span>${money(inv.amount)}</span></div><div class="summary-row"><span>${t('discount')}</span><span>− ${money(discount(inv))}</span></div>`:''}
           <div class="summary-row total"><span>${t('totalPrint')}</span><span>${money(total(inv))}</span></div>
           <div class="summary-row"><span>${t('paidPrint')}</span><span>${money(paid(inv))}</span></div>
           <div class="summary-row balance"><span>${t('remainingPrint')}</span><span>${money(balance(inv))}</span></div>
@@ -483,6 +492,7 @@ async function buildPaginatedInvoice(inv){
   }
   const summary=node(`<section class="ao-print-summary">
     <div class="ao-summary-head">${currentLang==='ar'?'ملخص الفاتورة':'Invoice Summary'}</div>
+    ${discount(inv)>0?`<div><span>${t('beforeDiscount')}</span><b>${money(inv.amount)}</b></div><div><span>${t('discount')}</span><b>− ${money(discount(inv))}</b></div>`:''}
     <div><span>${t('totalPrint')}</span><b>${money(total(inv))}</b></div>
     <div><span>${t('paidPrint')}</span><b>${money(paid(inv))}</b></div>
     <div class="ao-balance"><span>${t('remainingPrint')}</span><b>${money(balance(inv))}</b></div>
